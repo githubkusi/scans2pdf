@@ -48,7 +48,6 @@ class PageControl:
 	os.remove(self.pagesFile)
 
   
-
 class MockScan:
   def __init__(self):
     return 
@@ -83,6 +82,7 @@ class Scan:
     self.convert(n_jpg,n_pdf)
     self.rm(n_jpg)
     
+    
 class PdfUnite:
   def __init__(self):
     return 
@@ -92,7 +92,8 @@ class PdfUnite:
     tar = n + ".pdf"
     cmd = "pdfunite " + src + " " + tar    
     os.system(cmd)
-    os.system("rm " + n + ".*.pdf")  
+    os.system("rm " + n + ".*.pdf")
+    
     
 class Params:  
   def parseArgs(self):
@@ -136,13 +137,18 @@ class Control:
 	  #scanning in progress
 	  pv = self.pageControl.getPageValues()
 	  
+	  #TODO
+	  #test for inconsistency between pageCount,name,color or even forbid params
+	  
 	else:
 	  #new scanning starts
-	  pv = PageValues();
-	  pv.total = pageCount;
+	  pv = PageValues()
+	  pv.total = pageCount
+	  pv.name = name
+	  pv.color = color
 	  
-	curPdfName = self.getCurPdfName(name,pv.current)
-	self.scan.scanToPdf(curPdfName,color)
+	curPdfName = self.getCurPdfName(pv.name,pv.current)
+	self.scan.scanToPdf(curPdfName,pv.color)
 	  
 	if pv.current < pv.total:
 	  #multipage scanning in progress, expecting more scans
@@ -154,7 +160,7 @@ class Control:
 	  #last page was scanned: remove pagefile if any and unite pdfs
 	  print "Last page was scanned, unite the %d scans" % pv.total
 	  self.pageControl.rmPagesFile()
-	  self.pdfunite.pdfunite(name)
+	  self.pdfunite.pdfunite(pv.name)
 	  
 
 def main():
