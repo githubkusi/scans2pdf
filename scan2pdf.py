@@ -9,6 +9,17 @@ import getopt
 import os.path
 import os
 import argparse
+import json
+
+
+class PageValues:
+  def __init__(self, j=None):
+    if j is None:
+      self.current=1
+      self.total=1
+      
+    else:    
+      self.__dict__ = json.loads(j)
 
 class PageControl:
   def __init__(self):
@@ -17,19 +28,20 @@ class PageControl:
   def hasPagesFile(self):
     return os.path.isfile(self.pagesFile)
   
-  def getPageValue(self):
+  def getPageValues(self):
     with open(self.pagesFile) as f:
-      line = f.readline()
-    return int(line)
+      js = f.readline()
+    pv = PageValues(js)
+    return pv
   
-  def setPageValue(self,v):
-    buf = "%d" % (v)
+  def setPageValues(self,pv):
+    buf = json.dumps(pv)
     f = open(self.pagesFile,'w')
     f.write(buf)
-    f.close()
-    return
+    f.close()    
   
   def rmPagesFile(self):
+    if self.hasPagesFile():
 	os.remove(self.pagesFile)
   
 
@@ -101,6 +113,7 @@ class MockParams:
 	
   def parseArgs(self):
 	return	
+      
 	  
 class Control:
   def __init__(self,p,s,pu):
@@ -112,20 +125,24 @@ class Control:
         #name without suffix
 	if self.pageControl.hasPagesFile():
 	  #scanning in progress
-	  pageCount=self.pageControl.getPageValue()
+	  pv = self.pageControl.getPageValues()
+	  
 	else:
 	  #new scanning starts
-	  self.pageControl.setPageValue(pageCount)
+	  pv = PageValues();
+	  pv.total = pageCount;
 	  
-	self.scan.scanToPdf(name,pageCount)
+	self.scan.scanToPdf(name,pv.current)
 	  
-	if pageCount > 1:
+	if pv.current > 1:
 	  #multipage scanning in progress, expecting more scans
-	  self.pageControl.setPageValue(pageCount-1)
+	  pv.current = pv.current - 1
+	  self.pageControl.setPageValues(pv)
+	  
 	else:
-	  #last page was scanned: remove pagefile and unite pdfs
+	  #last page was scanned: remove pagefile if any and unite pdfs
 	  self.pageControl.rmPagesFile()
-	  self.scan.pdfunite(name)
+	  self.pdfunite.pdfunite(name)
 	  
 	  
 	return 
