@@ -12,7 +12,7 @@ import argparse
 import json
 
 
-class PageValues:
+class PageValues(object):
   def __init__(self, j=None):
     if j is None:
       self.current=1
@@ -20,6 +20,9 @@ class PageValues:
       
     else:    
       self.__dict__ = json.loads(j)
+      
+  def serialize(self):
+    return json.dumps(self.__dict__)
 
 class PageControl:
   def __init__(self):
@@ -35,7 +38,7 @@ class PageControl:
     return pv
   
   def setPageValues(self,pv):
-    buf = json.dumps(pv)
+    buf = pv.serialize()
     f = open(self.pagesFile,'w')
     f.write(buf)
     f.close()    
@@ -101,14 +104,11 @@ class Params:
     self.name = args.name or args.filename
     self.pageCount = args.count or args.pagecount or 1
     self.color = args.color
-    print self.name
-    print self.pageCount
-    print self.color
     
 class MockParams:
   def __init__(self):
 	self.name='mydoc'
-	self.pageCount=1
+	self.pageCount=2
 	self.color=False
 	
   def parseArgs(self):
@@ -134,27 +134,23 @@ class Control:
 	  
 	self.scan.scanToPdf(name,pv.current)
 	  
-	if pv.current > 1:
+	if pv.current < pv.total:
 	  #multipage scanning in progress, expecting more scans
-	  pv.current = pv.current - 1
-	  self.pageControl.setPageValues(pv)
+	  print "Page %d of %d scanned" % (pv.current, pv.total)
+	  pv.current = pv.current + 1
+	  self.pageControl.setPageValues(pv)	  
 	  
 	else:
 	  #last page was scanned: remove pagefile if any and unite pdfs
+	  print "Last page was scanned, unite the %d scans" % pv.total
 	  self.pageControl.rmPagesFile()
 	  self.pdfunite.pdfunite(name)
 	  
-	  
-	return 
-  
-
-                  
 
 def main():
-  print(os.getcwd() + "\n")
   p = PageControl()
-  #m = Params()
-  m = MockParams()
+  m = Params()
+  #m = MockParams()
   # s = Scan()
   s = MockScan()
   pu  = PdfUnite()
@@ -162,10 +158,7 @@ def main():
   
   m.parseArgs()
   c.run(m.name,m.pageCount,m.color)
-  
-  
-  
-  
+        
   
 if __name__ == "__main__":
   main()
