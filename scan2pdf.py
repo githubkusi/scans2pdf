@@ -10,7 +10,7 @@ import os.path
 import os
 import argparse
 
-class PageCount:
+class PageControl:
   def __init__(self):
     self.pagesFile = 'pages'
     
@@ -19,15 +19,27 @@ class PageCount:
   
   def getPageValue(self):
     with open(self.pagesFile) as f:
-      line = f.readline();
-    return line
+      line = f.readline()
+    return int(line)
   
   def setPageValue(self,v):
-    buf = "%d\n" % (v)
+    buf = "%d" % (v)
     f = open(self.pagesFile,'w')
     f.write(buf)
     f.close()
     return
+  
+  def rmPagesFile(self):
+	os.remove(self.pagesFile)
+  
+
+class MockScan:
+  def __init__(self):
+    return 
+  
+  def scanToPdf(self,n,count):
+    cmd = "cp tmp.pdf %s.%d.pdf" % (n, count)
+    os.system(cmd)    
   
 class Scan:
   def __init__(self):
@@ -38,20 +50,30 @@ class Scan:
     
   def convert(self,src,tar):
     os.system("convert -page a4 " + src + " " + tar)
-    
+	  
   def rm(self,n):
-    os.system("rm " + n)
+    os.system("rm " + n)    
   
-  def scanToPdf(self,n):
+  def scanToPdf(self,n,count):
+    c = str(count)
     q="\""
-    n_jpg = q + n + ".jpg" + q
-    n_pdf = q + n + ".pdf" + q
+    n_jpg = q + n + "." + c + ".jpg" + q
+    n_pdf = q + n + "." + c + ".pdf" + q
     self.scanToJpg(n_jpg)
     self.convert(n_jpg,n_pdf)
     self.rm(n_jpg)
     
-class Main:  
-
+class PdfUnite:
+  def __init__(self):
+    return 
+  
+  def pdfunite(self,n):
+    src = n + "*pdf"
+    tar = n + ".pdf"
+    os.system("pdfunite " + src + " " + tar)
+    os.system("rm " + n + ".*.pdf")  
+    
+class Params:  
   def parseArgs(self):
     parser = argparse.ArgumentParser(description='Scan to a pdf document')
     group1 = parser.add_mutually_exclusive_group()
@@ -70,15 +92,61 @@ class Main:
     print self.name
     print self.pageCount
     print self.color
+    
+class MockParams:
+  def __init__(self):
+	self.name='mydoc'
+	self.pageCount=1
+	self.color=False
+	
+  def parseArgs(self):
+	return	
 	  
-      
-    
-    
+class Control:
+  def __init__(self,p,s,pu):
+	self.pageControl=p
+	self.scan=s
+	self.pdfunite=pu
+	
+  def run(self,name,pageCount,color):
+        #name without suffix
+	if self.pageControl.hasPagesFile():
+	  #scanning in progress
+	  pageCount=self.pageControl.getPageValue()
+	else:
+	  #new scanning starts
+	  self.pageControl.setPageValue(pageCount)
+	  
+	self.scan.scanToPdf(name,pageCount)
+	  
+	if pageCount > 1:
+	  #multipage scanning in progress, expecting more scans
+	  self.pageControl.setPageValue(pageCount-1)
+	else:
+	  #last page was scanned: remove pagefile and unite pdfs
+	  self.pageControl.rmPagesFile()
+	  self.scan.pdfunite(name)
+	  
+	  
+	return 
+  
+
+                  
 
 def main():
-  p = PageCount()
-  m = Main()
+  print(os.getcwd() + "\n")
+  p = PageControl()
+  #m = Params()
+  m = MockParams()
+  # s = Scan()
+  s = MockScan()
+  pu  = PdfUnite()
+  c = Control(p,s,pu)
+  
   m.parseArgs()
+  c.run(m.name,m.pageCount,m.color)
+  
+  
   
   
   
