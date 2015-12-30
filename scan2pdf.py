@@ -46,22 +46,28 @@ class PageControl:
   def rmPagesFile(self):
     if self.hasPagesFile():
 	os.remove(self.pagesFile)
+
   
 
 class MockScan:
   def __init__(self):
     return 
   
-  def scanToPdf(self,n,count):
-    cmd = "cp tmp.pdf %s.%d.pdf" % (n, count)
+  def scanToPdf(self,n,color):
+    cmd = "cp tmp.pdf " + n
     os.system(cmd)    
   
 class Scan:
   def __init__(self):
     return
 
-  def scanToJpg(self,n):
-    os.system("hp-scan -o " + n)
+  def scanToJpg(self,n,color=False):
+    c = {True:'color', False:'grey'}
+    cmd = "hp-scan -m" + c[color] + " -o" + n
+    os.system(cmd)
+    
+    #debug
+    #os.system("cp tmp.jpg " + n)
     
   def convert(self,src,tar):
     os.system("convert -page a4 " + src + " " + tar)
@@ -69,12 +75,11 @@ class Scan:
   def rm(self,n):
     os.system("rm " + n)    
   
-  def scanToPdf(self,n,count):
-    c = str(count)
+  def scanToPdf(self,n,color=False):
     q="\""
-    n_jpg = q + n + "." + c + ".jpg" + q
-    n_pdf = q + n + "." + c + ".pdf" + q
-    self.scanToJpg(n_jpg)
+    n_jpg = q + n + ".jpg" + q
+    n_pdf = q + n + q
+    self.scanToJpg(n_jpg, color)
     self.convert(n_jpg,n_pdf)
     self.rm(n_jpg)
     
@@ -83,9 +88,10 @@ class PdfUnite:
     return 
   
   def pdfunite(self,n):
-    src = n + "*pdf"
+    src = n + ".*.pdf"
     tar = n + ".pdf"
-    os.system("pdfunite " + src + " " + tar)
+    cmd = "pdfunite " + src + " " + tar    
+    os.system(cmd)
     os.system("rm " + n + ".*.pdf")  
     
 class Params:  
@@ -109,7 +115,7 @@ class MockParams:
   def __init__(self):
 	self.name='mydoc'
 	self.pageCount=2
-	self.color=False
+	self.color=True
 	
   def parseArgs(self):
 	return	
@@ -120,6 +126,9 @@ class Control:
 	self.pageControl=p
 	self.scan=s
 	self.pdfunite=pu
+	
+  def getCurPdfName(self,name, count):
+    return "%s.%d.pdf" % (name, count)     
 	
   def run(self,name,pageCount,color):
         #name without suffix
@@ -132,7 +141,8 @@ class Control:
 	  pv = PageValues();
 	  pv.total = pageCount;
 	  
-	self.scan.scanToPdf(name,pv.current)
+	curPdfName = self.getCurPdfName(name,pv.current)
+	self.scan.scanToPdf(curPdfName,color)
 	  
 	if pv.current < pv.total:
 	  #multipage scanning in progress, expecting more scans
@@ -151,8 +161,8 @@ def main():
   p = PageControl()
   m = Params()
   #m = MockParams()
-  # s = Scan()
-  s = MockScan()
+  s = Scan()
+  # s = MockScan()
   pu  = PdfUnite()
   c = Control(p,s,pu)
   
