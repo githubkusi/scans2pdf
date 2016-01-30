@@ -63,7 +63,8 @@ class Scan:
     def __init__(self):
         return
 
-    def scan_to_jpg(self, n, color=False):
+    @staticmethod
+    def scan_to_jpg(n, color=False):
         c = {True: 'color', False: 'grey'}
         cmd = "hp-scan -m" + c[color] + " -o" + n
         os.system(cmd)
@@ -71,10 +72,12 @@ class Scan:
         # debug
         # os.system("cp tmp.jpg " + n)
 
-    def convert(self, src, tar):
+    @staticmethod
+    def convert(src, tar):
         os.system("convert -page a4 " + src + " " + tar)
 
-    def rm(self, n):
+    @staticmethod
+    def rm(n):
         os.system("rm " + n)
 
     def scan_to_pdf(self, n, color=False):
@@ -90,7 +93,8 @@ class PdfUnite:
     def __init__(self):
         return
 
-    def pdfunite(self, n):
+    @staticmethod
+    def pdfunite(n):
         src = n + ".*.pdf"
         tar = n + ".pdf"
         cmd = "pdfunite " + src + " " + tar
@@ -127,7 +131,8 @@ class MockParams:
         self.pageCount = 2
         self.color = True
 
-    def parse_args(self):
+    @staticmethod
+    def parse_args():
         return
 
 
@@ -137,7 +142,8 @@ class Control:
         self.scan = s
         self.pdfunite = pu
 
-    def get_cur_pdf_name(self, name, count):
+    @staticmethod
+    def get_cur_pdf_name(name, count):
         return "%s.%d.pdf" % (name, count)
 
     def run(self, name, page_count, color, rescan):
