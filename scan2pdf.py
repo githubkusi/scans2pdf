@@ -111,12 +111,14 @@ class Params:
         group2.add_argument('-c', '--count', metavar='<count>', type=int, help='number of pages to be scanned')
         group2.add_argument('pagecount', metavar='<count>', type=int, help='number of pages to be scanned', nargs='?')
         parser.add_argument('--color', dest='color', action='store_true', help='color instead of black & white')
+        parser.add_argument('-r', '--rescan', dest='rescan', action='store_true', help='rescan previous page')
 
         args = parser.parse_args()
 
         self.name = args.name or args.filename
         self.pageCount = args.count or args.pagecount or 1
         self.color = args.color
+        self.rescan = args.rescan
 
 
 class MockParams:
@@ -138,11 +140,17 @@ class Control:
     def get_cur_pdf_name(self, name, count):
         return "%s.%d.pdf" % (name, count)
 
-    def run(self, name, page_count, color):
+    def run(self, name, page_count, color, rescan):
         # name without suffix
         if self.pageControl.has_pages_file():
             # scanning in progress
+
             pv = self.pageControl.get_page_values()
+            assert pv.current > 1
+
+            if rescan:
+                pv.current -= 1
+                print "rescan again page %d" % pv.current
 
             # TODO
             # test for inconsistency between pageCount,name,color or even forbid params
@@ -180,7 +188,7 @@ def main():
     c = Control(p, s, pu)
 
     m.parse_args()
-    c.run(m.name, m.pageCount, m.color)
+    c.run(m.name, m.pageCount, m.color, m.rescan)
 
 
 if __name__ == "__main__":
