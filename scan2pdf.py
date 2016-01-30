@@ -40,7 +40,7 @@ class PageControl:
 
     def set_page_values(self, pv):
         buf = pv.serialize()
-        f = open(self.pagesFile,'w')
+        f = open(self.pagesFile, 'w')
         f.write(buf)
         f.close()
 
@@ -48,11 +48,13 @@ class PageControl:
         if self.has_pages_file():
             os.remove(self.pagesFile)
 
+
 class MockScan:
     def __init__(self):
         return
 
-    def scan_to_pdf(self, n, color):
+    @staticmethod
+    def scan_to_pdf(n, color):
         cmd = "cp tmp.pdf " + n
         os.system(cmd)
 
@@ -62,25 +64,25 @@ class Scan:
         return
 
     def scan_to_jpg(self, n, color=False):
-        c = {True:'color', False:'grey'}
+        c = {True: 'color', False: 'grey'}
         cmd = "hp-scan -m" + c[color] + " -o" + n
         os.system(cmd)
 
-        #debug
-        #os.system("cp tmp.jpg " + n)
+        # debug
+        # os.system("cp tmp.jpg " + n)
 
-    def convert(self,src,tar):
+    def convert(self, src, tar):
         os.system("convert -page a4 " + src + " " + tar)
 
-    def rm(self,n):
+    def rm(self, n):
         os.system("rm " + n)
 
     def scan_to_pdf(self, n, color=False):
-        q="\""
+        q = "\""
         n_jpg = q + n + ".jpg" + q
         n_pdf = q + n + q
         self.scan_to_jpg(n_jpg, color)
-        self.convert(n_jpg,n_pdf)
+        self.convert(n_jpg, n_pdf)
         self.rm(n_jpg)
 
 
@@ -88,7 +90,7 @@ class PdfUnite:
     def __init__(self):
         return
 
-    def pdfunite(self,n):
+    def pdfunite(self, n):
         src = n + ".*.pdf"
         tar = n + ".pdf"
         cmd = "pdfunite " + src + " " + tar
@@ -100,12 +102,12 @@ class Params:
     def parse_args(self):
         parser = argparse.ArgumentParser(description='Scan to a pdf document')
         group1 = parser.add_mutually_exclusive_group()
-        group1.add_argument('-n','--name', metavar='<filename>', type=str, help='an integer for the accumulator')
-        group1.add_argument('filename',nargs='?')
+        group1.add_argument('-n', '--name', metavar='<filename>', type=str, help='an integer for the accumulator')
+        group1.add_argument('filename', nargs='?')
         group2 = parser.add_mutually_exclusive_group()
-        group2.add_argument('-c','--count', metavar='<count>', type=int, help='number of pages to be scanned')
-        group2.add_argument('pagecount', metavar='<count>', type=int, help='number of pages to be scanned',nargs='?')
-        parser.add_argument('--color',dest='color', action='store_true', help='color instead of black & white')
+        group2.add_argument('-c', '--count', metavar='<count>', type=int, help='number of pages to be scanned')
+        group2.add_argument('pagecount', metavar='<count>', type=int, help='number of pages to be scanned', nargs='?')
+        parser.add_argument('--color', dest='color', action='store_true', help='color instead of black & white')
 
         args = parser.parse_args()
 
@@ -116,36 +118,36 @@ class Params:
 
 class MockParams:
     def __init__(self):
-        self.name='mydoc'
-        self.pageCount=2
-        self.color=True
+        self.name = 'mydoc'
+        self.pageCount = 2
+        self.color = True
 
     def parse_args(self):
         return
 
 
 class Control:
-    def __init__(self,p,s,pu):
-        self.pageControl=p
-        self.scan=s
-        self.pdfunite=pu
+    def __init__(self, p, s, pu):
+        self.pageControl = p
+        self.scan = s
+        self.pdfunite = pu
 
     def get_cur_pdf_name(self, name, count):
         return "%s.%d.pdf" % (name, count)
 
-    def run(self,name,pageCount,color):
-        #name without suffix
+    def run(self, name, page_count, color):
+        # name without suffix
         if self.pageControl.has_pages_file():
-            #scanning in progress
+            # scanning in progress
             pv = self.pageControl.get_page_values()
 
-            #TODO
-            #test for inconsistency between pageCount,name,color or even forbid params
+            # TODO
+            # test for inconsistency between pageCount,name,color or even forbid params
 
         else:
-            #new scanning starts
+            # new scanning starts
             pv = PageValues()
-            pv.total = pageCount
+            pv.total = page_count
             pv.name = name
             pv.color = color
 
@@ -153,13 +155,13 @@ class Control:
         self.scan.scan_to_pdf(curPdfName, pv.color)
 
         if pv.current < pv.total:
-            #multipage scanning in progress, expecting more scans
+            # multipage scanning in progress, expecting more scans
             print "Page %d of %d scanned" % (pv.current, pv.total)
-            pv.current = pv.current + 1
+            pv.current += 1
             self.pageControl.set_page_values(pv)
 
         else:
-            #last page was scanned: remove pagefile if any and unite pdfs
+            # last page was scanned: remove pagefile if any and unite pdfs
             print "Last page was scanned, unite the %d scans" % pv.total
             self.pageControl.rm_pages_file()
             self.pdfunite.pdfunite(pv.name)
@@ -168,14 +170,14 @@ class Control:
 def main():
     p = PageControl()
     m = Params()
-    #m = MockParams()
+    # m = MockParams()
     s = Scan()
     # s = MockScan()
-    pu  = PdfUnite()
-    c = Control(p,s,pu)
+    pu = PdfUnite()
+    c = Control(p, s, pu)
 
     m.parse_args()
-    c.run(m.name,m.pageCount,m.color)
+    c.run(m.name, m.pageCount, m.color)
 
 
 if __name__ == "__main__":
