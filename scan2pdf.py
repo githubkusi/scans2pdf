@@ -99,6 +99,9 @@ class PdfUnite:
 
 
 class Params:
+    def __init__(self):
+        self.name, self.pageCount, self.color, self.rescan = None, None, None, None
+
     def parse_args(self):
         parser = argparse.ArgumentParser(description='Scan to a pdf document')
         group1 = parser.add_mutually_exclusive_group()
@@ -151,8 +154,8 @@ class Control:
             pv.name = name
             pv.color = color
 
-        curPdfName = self.get_cur_pdf_name(pv.name, pv.current)
-        self.scan.scan_to_pdf(curPdfName, pv.color)
+        cur_pdf_name = self.get_cur_pdf_name(pv.name, pv.current)
+        self.scan.scan_to_pdf(cur_pdf_name, pv.color)
 
         if pv.current < pv.total:
             # multipage scanning in progress, expecting more scans
@@ -182,4 +185,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-  
