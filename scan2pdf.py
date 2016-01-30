@@ -54,7 +54,7 @@ class MockScan:
         return
 
     @staticmethod
-    def scan_to_pdf(n, color):
+    def scan_to_pdf(n, _):
         cmd = "cp tmp.pdf " + n
         os.system(cmd)
 
@@ -100,7 +100,7 @@ class PdfUnite:
 
 class Params:
     def __init__(self):
-        self.name, self.pageCount, self.color, self.rescan = None, None, None, None
+        [self.name, self.pageCount, self.color, self.rescan] = [None, None, None, None]
 
     def parse_args(self):
         parser = argparse.ArgumentParser(description='Scan to a pdf document')
