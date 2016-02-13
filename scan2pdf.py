@@ -97,11 +97,12 @@ class PdfUnite:
 
     @staticmethod
     def pdfunite(n):
-        src = n + ".*.pdf"
-        tar = n + ".pdf"
+        q = "\""
+        src = q + n + q + ".*.pdf"
+        tar = q + n + ".pdf" + q
         cmd = "pdfunite " + src + " " + tar
         os.system(cmd)
-        os.system("rm " + n + ".*.pdf")
+        os.system("rm " + q + n + q + ".*.pdf")
 
 
 class Params:
@@ -160,8 +161,8 @@ class Control:
                 pv.current -= 1
                 print "rescan again page %d" % pv.current
 
-            # TODO
-            # test for inconsistency between pageCount,name,color or even forbid params
+                # TODO
+                # test for inconsistency between pageCount,name,color or even forbid params
 
         else:
             # new scanning starts
