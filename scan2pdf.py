@@ -138,6 +138,7 @@ class MockParams:
         self.name = 'mydoc'
         self.pageCount = 2
         self.color = True
+        self.rescan = False
 
     @staticmethod
     def parse_args():
