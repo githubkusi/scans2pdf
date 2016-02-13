@@ -69,7 +69,8 @@ class Scan:
     def scan_to_jpg(n, color=False):
         c = {True: 'color', False: 'grey'}
         cmd = "hp-scan -m" + c[color] + " -o" + n
-        os.system(cmd)
+        ret = os.system(cmd)
+        return ret
 
         # debug
         # os.system("cp tmp.jpg " + n)
@@ -86,9 +87,13 @@ class Scan:
         q = "\""
         n_jpg = q + n + ".jpg" + q
         n_pdf = q + n + q
-        self.scan_to_jpg(n_jpg, color)
-        self.convert(n_jpg, n_pdf)
-        self.rm(n_jpg)
+        ret = self.scan_to_jpg(n_jpg, color)
+        if ret == 0:
+            self.convert(n_jpg, n_pdf)
+            self.rm(n_jpg)
+
+        return ret
+
 
 
 class PdfUnite:
@@ -172,7 +177,9 @@ class Control:
             pv.color = color
 
         cur_pdf_name = self.get_cur_pdf_name(pv.name, pv.current)
-        self.scan.scan_to_pdf(cur_pdf_name, pv.color)
+        if self.scan.scan_to_pdf(cur_pdf_name, pv.color) > 0:
+            print("abort scan2pdf due to scanning error")
+            sys.exit(-1)
 
         if pv.current < pv.total:
             # multipage scanning in progress, expecting more scans
