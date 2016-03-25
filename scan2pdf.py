@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 
 '''
 Documentation, License etc.
@@ -59,6 +59,7 @@ class MockScan:
     def scan_to_pdf(n, _):
         cmd = "cp tmp.pdf " + n
         os.system(cmd)
+        return 0
 
 
 class Scan:
@@ -93,7 +94,6 @@ class Scan:
             self.rm(n_jpg)
 
         return ret
-
 
 
 class PdfUnite:
@@ -165,7 +165,7 @@ class Control:
 
             if rescan:
                 pv.current -= 1
-                print "rescan again page %d" % pv.current
+                print("rescan again page %d" % pv.current)
 
                 # TODO
                 # test for inconsistency between pageCount,name,color or even forbid params
@@ -184,13 +184,13 @@ class Control:
 
         if pv.current < pv.total:
             # multipage scanning in progress, expecting more scans
-            print "Page %d of %d scanned" % (pv.current, pv.total)
+            print("Page %d of %d scanned" % (pv.current, pv.total))
             pv.current += 1
             self.pageControl.set_page_values(pv)
 
         else:
             # last page was scanned: remove pagefile if any and unite pdfs
-            print "Last page was scanned, unite the %d scans" % pv.total
+            print("Last page was scanned, unite the %d scans" % pv.total)
             self.pageControl.rm_pages_file()
             self.pdfunite.pdfunite(pv.name)
 
