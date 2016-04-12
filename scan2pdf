@@ -112,7 +112,7 @@ class PdfUnite:
 
 class Params:
     def __init__(self):
-        [self.name, self.pageCount, self.color, self.rescan] = [None, None, None, None]
+        [self.name, self.pageCount, self.color, self.rescan, self.finish] = [None, None, None, None, None]
 
     def parse_args(self):
         parser = argparse.ArgumentParser(description='Scan to a pdf document')
@@ -124,6 +124,7 @@ class Params:
         group2.add_argument('pagecount', metavar='<count>', type=int, help='number of pages to be scanned', nargs='?')
         parser.add_argument('--color', dest='color', action='store_true', help='color instead of black & white')
         parser.add_argument('-r', '--rescan', dest='rescan', action='store_true', help='rescan previous page')
+        parser.add_argument('-f', '--finish', dest='finish', action='store_true', help='finish and start merge even if more pages are exptected')
 
         args = parser.parse_args()
 
@@ -131,6 +132,7 @@ class Params:
         self.pageCount = args.count or args.pagecount or 1
         self.color = args.color
         self.rescan = args.rescan
+        self.finish = args.finish
 
 
 class MockParams:
@@ -155,13 +157,20 @@ class Control:
     def get_cur_pdf_name(name, count):
         return '{:s}.{:02d}.pdf'.format(name, count)
 
-    def run(self, name, page_count, color, rescan):
+    def run(self, name, page_count, color, rescan, finish):
         # name without suffix
         if self.pageControl.has_pages_file():
             # scanning in progress
 
             pv = self.pageControl.get_page_values()
             assert pv.current > 1
+
+            if finish:
+                # start merge even if more files are expected
+                print("Finish and unite {:d} of {:d} expected scans".format(pv.current, pv.total))
+                self.pageControl.rm_pages_file()
+                self.pdfunite.pdfunite(pv.name)
+                sys.exit(0)
 
             if rescan:
                 pv.current -= 1
@@ -176,6 +185,8 @@ class Control:
             pv.total = page_count
             pv.name = name
             pv.color = color
+
+        assert not finish, "cannot finish when no scanning is in progress"
 
         cur_pdf_name = self.get_cur_pdf_name(pv.name, pv.current)
         if self.scan.scan_to_pdf(cur_pdf_name, pv.color) > 0:
@@ -205,7 +216,7 @@ def main():
     c = Control(p, s, pu)
 
     m.parse_args()
-    c.run(m.name, m.pageCount, m.color, m.rescan)
+    c.run(m.name, m.pageCount, m.color, m.rescan, m.finish)
 
 
 if __name__ == "__main__":
