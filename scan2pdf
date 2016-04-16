@@ -15,6 +15,13 @@ import json
 
 
 class PageValues(object):
+    """
+    States of pages
+
+    Properties
+    - current: 1-indexed value of next scan (not the # of already performed scans)
+    - total:   total amount of expected scans
+    """
     def __init__(self, j=None):
         if j is None:
             self.current = 1
@@ -167,7 +174,7 @@ class Control:
 
             if finish:
                 # start merge even if more files are expected
-                print("Finish and unite {:d} of {:d} expected scans".format(pv.current, pv.total))
+                print("Finish and unite {:d} of {:d} expected scans".format(pv.current - 1, pv.total))
                 self.pageControl.rm_pages_file()
                 self.pdfunite.pdfunite(pv.name)
                 sys.exit(0)
