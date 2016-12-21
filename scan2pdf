@@ -12,6 +12,7 @@ import os.path
 import os
 import argparse
 import json
+import time
 
 
 class PageValues(object):
@@ -119,7 +120,8 @@ class PdfUnite:
 
 class Params:
     def __init__(self):
-        [self.name, self.pageCount, self.color, self.rescan, self.finish] = [None, None, None, None, None]
+        [self.name, self.pageCount, self.color, self.rescan, self.finish, self.appendToday] \
+            = [None, None, None, None, None, None]
 
     def parse_args(self):
         parser = argparse.ArgumentParser(description='Scan to a pdf document')
@@ -133,6 +135,8 @@ class Params:
         parser.add_argument('-r', '--rescan', dest='rescan', action='store_true', help='rescan previous page')
         parser.add_argument('-f', '--finish', dest='finish', action='store_true',
                             help='finish and start merge even if more pages are expected')
+        parser.add_argument('-t', '--append-today', dest='append_today', action='store_true',
+                            help='append today\'s date as suffix in the form -YYYY-MM-DD')
 
         args = parser.parse_args()
 
@@ -141,6 +145,7 @@ class Params:
         self.color = args.color
         self.rescan = args.rescan
         self.finish = args.finish
+        self.appendToday = args.append_today
 
 
 class MockParams:
@@ -165,8 +170,15 @@ class Control:
     def get_cur_pdf_name(name, count):
         return '{:s}.{:02d}.pdf'.format(name, count)
 
-    def run(self, name, page_count, color, rescan, finish):
-        # name without suffix
+    @staticmethod
+    def append_today(name):
+        suffix = time.strftime("%Y-%m-%d")
+        return name + '-' + suffix
+
+    def run(self, name, page_count, color, rescan, finish, append_today):
+        # Parameter description
+        #   name: without suffix ".pdf"
+
         if self.pageControl.has_pages_file():
             # scanning in progress
 
@@ -189,6 +201,11 @@ class Control:
 
         else:
             # new scanning starts
+
+            # determine filename
+            if append_today:
+                name = self.append_today(name)
+
             pv = PageValues()
             pv.total = page_count
             pv.name = name
@@ -224,7 +241,7 @@ def main():
     c = Control(p, s, pu)
 
     m.parse_args()
-    c.run(m.name, m.pageCount, m.color, m.rescan, m.finish)
+    c.run(m.name, m.pageCount, m.color, m.rescan, m.finish, m.appendToday)
 
 
 if __name__ == "__main__":
