@@ -128,15 +128,16 @@ class Params:
         group1.add_argument('filename', nargs='?')
         group2 = parser.add_mutually_exclusive_group()
         group2.add_argument('-c', '--count', metavar='<count>', type=int, help='number of pages to be scanned')
-        group2.add_argument('pagecount', metavar='<count>', type=int, help='number of pages to be scanned', nargs='?')
+        group2.add_argument('page_count', metavar='<count>', type=int, help='number of pages to be scanned', nargs='?')
         parser.add_argument('--color', dest='color', action='store_true', help='color instead of black & white')
         parser.add_argument('-r', '--rescan', dest='rescan', action='store_true', help='rescan previous page')
-        parser.add_argument('-f', '--finish', dest='finish', action='store_true', help='finish and start merge even if more pages are exptected')
+        parser.add_argument('-f', '--finish', dest='finish', action='store_true',
+                            help='finish and start merge even if more pages are expected')
 
         args = parser.parse_args()
 
         self.name = args.name or args.filename
-        self.pageCount = args.count or args.pagecount or 1
+        self.pageCount = args.count or args.page_count or 1
         self.color = args.color
         self.rescan = args.rescan
         self.finish = args.finish
