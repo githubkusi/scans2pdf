@@ -59,17 +59,6 @@ class PageControl:
             os.remove(self.pagesFile)
 
 
-class MockScan:
-    def __init__(self):
-        return
-
-    @staticmethod
-    def scan_to_pdf(n, _):
-        cmd = "cp tmp.pdf " + n
-        os.system(cmd)
-        return 0
-
-
 class Scan:
     def __init__(self):
         return
@@ -89,6 +78,11 @@ class Scan:
         os.system("convert -page a4 " + src + " " + tar)
 
     @staticmethod
+    def rotate(src):
+        os.system(f'pdftk "{src}" cat 1-endright output tmp.pdf')
+        os.system(f'mv tmp.pdf "{src}"')
+
+    @staticmethod
     def rm(n):
         os.system("rm " + n)
 
@@ -102,6 +96,14 @@ class Scan:
             self.rm(n_jpg)
 
         return ret
+
+
+class MockScan(Scan):
+    @staticmethod
+    def scan_to_pdf(n, _):
+        cmd = f'cp tmp.pdf "{n}"'
+        os.system(cmd)
+        return 0
 
 
 class PdfUnite:
@@ -120,8 +122,8 @@ class PdfUnite:
 
 class Params:
     def __init__(self):
-        [self.name, self.pageCount, self.color, self.rescan, self.finish, self.appendToday] \
-            = [None, None, None, None, None, None]
+        [self.name, self.pageCount, self.color, self.rescan, self.finish, self.appendToday, self.landscape] \
+            = [None, None, None, None, None, None, None]
 
     def parse_args(self):
         parser = argparse.ArgumentParser(description='Scan to a pdf document')
@@ -137,6 +139,8 @@ class Params:
                             help='finish and start merge even if more pages are expected')
         parser.add_argument('-t', '--append-today', dest='append_today', action='store_true',
                             help='append today\'s date as suffix in the form -YYYY-MM-DD')
+        parser.add_argument('-l', '--landscape', dest='landscape', action='store_true',
+                            help='rotate this page from portrait to landscape (clockwise)')
 
         args = parser.parse_args()
 
@@ -146,6 +150,7 @@ class Params:
         self.rescan = args.rescan
         self.finish = args.finish
         self.appendToday = args.append_today
+        self.landscape = args.landscape
 
 
 class MockParams:
@@ -175,7 +180,7 @@ class Control:
         suffix = time.strftime("%Y-%m-%d")
         return name + '-' + suffix
 
-    def run(self, name, page_count, color, rescan, finish, append_today):
+    def run(self, name, page_count, color, rescan, finish, append_today, landscape):
         # Parameter description
         #   name: without suffix ".pdf"
 
@@ -218,8 +223,11 @@ class Control:
             print("abort scan2pdf due to scanning error")
             sys.exit(-1)
 
+        if landscape:
+            self.scan.rotate(cur_pdf_name)
+
         if pv.current < pv.total:
-            # multipage scanning in progress, expecting more scans
+            # multi-page scanning in progress, expecting more scans
             print("Page %d of %d scanned" % (pv.current, pv.total))
             pv.current += 1
             self.pageControl.set_page_values(pv)
@@ -241,7 +249,7 @@ def main():
     c = Control(p, s, pu)
 
     m.parse_args()
-    c.run(m.name, m.pageCount, m.color, m.rescan, m.finish, m.appendToday)
+    c.run(m.name, m.pageCount, m.color, m.rescan, m.finish, m.appendToday, m.landscape)
 
 
 if __name__ == "__main__":
