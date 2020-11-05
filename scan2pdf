@@ -65,8 +65,8 @@ class Scan:
 
     @staticmethod
     def scan_to_jpg(n, color=False):
-        c = {True: 'color', False: 'grey'}
-        cmd = "hp-scan -m" + c[color] + " -o" + n
+        c = {True: 'Color', False: 'Gray'}
+        cmd = "scanimage -p --resolution 300 --mode " + c[color] + " --format=jpeg > " + n
         ret = os.system(cmd)
         return ret
 
