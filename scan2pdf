@@ -75,7 +75,13 @@ class Scan:
 
     @staticmethod
     def convert(src, tar):
-        os.system("convert -page a4 " + src + " " + tar)
+        # This solution doesn't have the strange 72dpi thing, but results in a
+        # "Missing 'endstream' or incorrect stream length" during pdfunite
+        # cmd = "convert " + src + " pdf:- | pdfjam --paper a4paper --outfile " + tar
+        
+        cmd = "convert -page a4 -density 72 " + src + " " + tar
+        print(cmd)
+        os.system(cmd)
 
     @staticmethod
     def rotate(src):
