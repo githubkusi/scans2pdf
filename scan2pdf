@@ -78,7 +78,7 @@ class Scan:
         # This solution doesn't have the strange 72dpi thing, but results in a
         # "Missing 'endstream' or incorrect stream length" during pdfunite
         # cmd = "convert " + src + " pdf:- | pdfjam --paper a4paper --outfile " + tar
-        
+
         cmd = "convert -page a4 -density 72 " + src + " " + tar
         print(cmd)
         os.system(cmd)
@@ -128,8 +128,8 @@ class PdfUnite:
 
 class Params:
     def __init__(self):
-        [self.name, self.pageCount, self.color, self.rescan, self.finish, self.appendToday, self.landscape] \
-            = [None, None, None, None, None, None, None]
+        [self.name, self.pageCount, self.color, self.rescan, self.finish, self.appendToday, self.landscape, self.last_scan] \
+            = [None, None, None, None, None, None, None, None]
 
     def parse_args(self):
         parser = argparse.ArgumentParser(description='Scan to a pdf document')
@@ -143,6 +143,8 @@ class Params:
         parser.add_argument('-r', '--rescan', dest='rescan', action='store_true', help='rescan previous page')
         parser.add_argument('-f', '--finish', dest='finish', action='store_true',
                             help='finish and start merge even if more pages are expected')
+        parser.add_argument('-L', '--last', dest='last_scan', action='store_true',
+                            help='merge pages after scan even if more pages were specified')
         parser.add_argument('-t', '--append-today', dest='append_today', action='store_true',
                             help='append today\'s date as suffix in the form -YYYY-MM-DD')
         parser.add_argument('-l', '--landscape', dest='landscape', action='store_true',
@@ -155,6 +157,7 @@ class Params:
         self.color = args.color
         self.rescan = args.rescan
         self.finish = args.finish
+        self.last_scan = args.last_scan
         self.appendToday = args.append_today
         self.landscape = args.landscape
 
@@ -186,7 +189,7 @@ class Control:
         suffix = time.strftime("%Y-%m-%d")
         return name + '-' + suffix
 
-    def run(self, name, page_count, color, rescan, finish, append_today, landscape):
+    def run(self, name, page_count, color, rescan, finish, last_scan, append_today, landscape):
         # Parameter description
         #   name: without suffix ".pdf"
 
@@ -232,6 +235,12 @@ class Control:
         if landscape:
             self.scan.rotate(cur_pdf_name)
 
+        if last_scan:
+            print(f"Last page was scanned, unite {pv.current} of {pv.total} specified scans")
+            self.pageControl.rm_pages_file()
+            self.pdfunite.pdfunite(pv.name)
+            return
+
         if pv.current < pv.total:
             # multi-page scanning in progress, expecting more scans
             print("Page %d of %d scanned" % (pv.current, pv.total))
@@ -255,7 +264,7 @@ def main():
     c = Control(p, s, pu)
 
     m.parse_args()
-    c.run(m.name, m.pageCount, m.color, m.rescan, m.finish, m.appendToday, m.landscape)
+    c.run(m.name, m.pageCount, m.color, m.rescan, m.finish, m.last_scan, m.appendToday, m.landscape)
 
 
 if __name__ == "__main__":
