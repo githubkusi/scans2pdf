@@ -122,8 +122,11 @@ class PdfUnite:
         src = q + n + q + ".*.pdf"
         tar = q + n + ".pdf" + q
         cmd = "pdfunite " + src + " " + tar
+        print(cmd)
         os.system(cmd)
-        os.system("rm " + q + n + q + ".*.pdf")
+        cmd_remove = "rm " + q + n + q + ".*.pdf"
+        print(cmd_remove)
+        os.system(cmd_remove)
 
 
 class Params:
