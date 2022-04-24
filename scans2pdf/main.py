@@ -1,11 +1,3 @@
-#!/usr/bin/python3
-
-'''
-Documentation, License etc.
-
-@package scan2pdf
-'''
-
 import sys
 import getopt
 import os.path
