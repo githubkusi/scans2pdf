@@ -99,9 +99,14 @@ class Scan:
 class MockScan(Scan):
     @staticmethod
     def scan_to_pdf(n, _):
-        cmd = f'cp tmp.pdf "{n}"'
+        cmd = f'cp test/sample.pdf "{n}"'
         os.system(cmd)
         return 0
+
+
+def ocr_pdf(filename):
+    cmd = f"ocrmypdf -l deu {filename} {filename}"
+    ret = os.system(cmd)
 
 
 class PdfUnite:
@@ -123,8 +128,8 @@ class PdfUnite:
 
 class Params:
     def __init__(self):
-        [self.name, self.pageCount, self.color, self.rescan, self.finish, self.appendToday, self.landscape, self.last_scan] \
-            = [None, None, None, None, None, None, None, None]
+        [self.name, self.pageCount, self.color, self.rescan, self.finish, self.appendToday, self.landscape, self.last_scan, self.ocr] \
+            = [None, None, None, None, None, None, None, None, None]
 
     def parse_args(self):
         parser = argparse.ArgumentParser(description='Scan to a pdf document')
@@ -144,6 +149,8 @@ class Params:
                             help='append today\'s date as suffix in the form -YYYY-MM-DD')
         parser.add_argument('-l', '--landscape', dest='landscape', action='store_true',
                             help='rotate this page from portrait to landscape (clockwise)')
+        parser.add_argument('-o', '--no-ocr', dest='ocr', action='store_false',
+                            help='skip tesseract OCR (text recognition')
 
         args = parser.parse_args()
 
@@ -155,6 +162,11 @@ class Params:
         self.last_scan = args.last_scan
         self.appendToday = args.append_today
         self.landscape = args.landscape
+        self.ocr = args.ocr
+
+        if self.name is None and self.rescan is not True and self.finish is not True:
+            parser.print_help()
+            parser.error('Specify filename')
 
 
 class MockParams:
@@ -184,7 +196,7 @@ class Control:
         suffix = time.strftime("%Y-%m-%d")
         return name + '-' + suffix
 
-    def run(self, name, page_count, color, rescan, finish, last_scan, append_today, landscape):
+    def run(self, name, page_count, color, rescan, finish, last_scan, append_today, landscape, ocr):
         # Parameter description
         #   name: without suffix ".pdf"
 
@@ -197,8 +209,7 @@ class Control:
             if finish:
                 # start merge even if more files are expected
                 print("Finish and unite {:d} of {:d} expected scans".format(pv.current - 1, pv.total))
-                self.pageControl.rm_pages_file()
-                self.pdfunite.pdfunite(pv.name)
+                self.finish_job(pv.name, ocr)
                 sys.exit(0)
 
             if rescan:
@@ -232,8 +243,7 @@ class Control:
 
         if last_scan:
             print(f"Last page was scanned, unite {pv.current} of {pv.total} specified scans")
-            self.pageControl.rm_pages_file()
-            self.pdfunite.pdfunite(pv.name)
+            self.finish_job(pv.name, ocr)
             return
 
         if pv.current < pv.total:
@@ -245,8 +255,16 @@ class Control:
         else:
             # last page was scanned: remove pagefile if any and unite pdfs
             print("Last page was scanned, unite the %d scans" % pv.total)
-            self.pageControl.rm_pages_file()
-            self.pdfunite.pdfunite(pv.name)
+            self.finish_job(pv.name, ocr)
+
+    def finish_job(self, name, ocr):
+        self.pageControl.rm_pages_file()
+        self.pdfunite.pdfunite(name)
+
+        # run text recognition
+        if ocr:
+            print("Run text recognition")
+            ocr_pdf(name + ".pdf")
 
 
 def main():
@@ -259,7 +277,7 @@ def main():
     c = Control(p, s, pu)
 
     m.parse_args()
-    c.run(m.name, m.pageCount, m.color, m.rescan, m.finish, m.last_scan, m.appendToday, m.landscape)
+    c.run(m.name, m.pageCount, m.color, m.rescan, m.finish, m.last_scan, m.appendToday, m.landscape, m.ocr)
 
 
 if __name__ == "__main__":
