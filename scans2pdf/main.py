@@ -271,8 +271,12 @@ def main():
     p = PageControl()
     m = Params()
     # m = MockParams()
-    s = Scan()
-    # s = MockScan()
+
+    if 'S2P_MOCKED_SCAN' in os.environ:
+        s = MockScan()
+    else:
+        s = Scan()
+
     pu = PdfUnite()
     c = Control(p, s, pu)
 
