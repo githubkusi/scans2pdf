@@ -105,7 +105,8 @@ class MockScan(Scan):
 
 
 def ocr_pdf(filename):
-    cmd = f"ocrmypdf -l deu {filename} {filename}"
+    cmd = f"ocrmypdf -l deu \"{filename}\" \"{filename}\""
+    print(cmd)
     ret = os.system(cmd)
 
 
