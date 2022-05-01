@@ -150,7 +150,7 @@ class Params:
         parser.add_argument('-l', '--landscape', dest='landscape', action='store_true',
                             help='rotate this page from portrait to landscape (clockwise)')
         parser.add_argument('-o', '--no-ocr', dest='ocr', action='store_false',
-                            help='skip tesseract OCR (text recognition')
+                            help='skip tesseract OCR (text recognition)')
 
         args = parser.parse_args()
 
