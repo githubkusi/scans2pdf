@@ -105,9 +105,17 @@ class MockScan(Scan):
 
 
 def ocr_pdf(filename):
+    # ugly hack: if tesseract prints a non-fatal error, ocrmypdf throws an exception.
+    # This happens during querying the available languages of tesseract by ocrmypdf
+    cmd_hack = "tesseract dummy dummy"
+    os.system(cmd_hack)
+
     cmd = f"ocrmypdf -l deu \"{filename}\" \"{filename}\""
     print(cmd)
     ret = os.system(cmd)
+
+    # cleanup hack
+    os.remove("tesseract_opencl_profile_devices.dat")
 
 
 class PdfUnite:
