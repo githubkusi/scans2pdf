@@ -109,9 +109,24 @@ def ocr_pdf(filename):
     #      or a proper output of tesseract --list-langs
     # TODO Make language configurable
 
+    # Opencl support triggers generation of the profile file. Unfortunately, OpenSuseTW builds tesseract with --enable-opencl, which is a bad idea.
+    # This hack can be removed once https://bugzilla.opensuse.org/show_bug.cgi?id=1213370 is solved
+    # Trigger creation of tesseract_opencl_profile_devices.dat. Since dummy is not available, tesseract stops after profile generation
+    os.system("tesseract dummy dummy")
+
+
     cmd = f"ocrmypdf -l deu \"{filename}\" \"{filename}\""
     print(cmd)
     ret = os.system(cmd)
+
+    # cleanup hack
+    fn_hack_profile = "tesseract_opencl_profile_devices.dat"
+    if os.path.exists(fn_hack_profile):
+        os.remove(fn_hack_profile)
+
+    fn_hack_dummy = "dummy.txt"
+    if os.path.exists(fn_hack_dummy):
+        os.remove(fn_hack_dummy)
 
 
 class PdfUnite:
