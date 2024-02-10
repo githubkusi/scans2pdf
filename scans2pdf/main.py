@@ -56,9 +56,9 @@ class Scan:
         return
 
     @staticmethod
-    def scan_to_jpg(n, color=False):
+    def scan_to_jpg(n, color=False, resolution=300):
         c = {True: 'Color', False: 'Gray'}
-        cmd = "scanimage -p --resolution 300 --mode " + c[color] + " --format=jpeg > " + n
+        cmd = "scanimage -p --resolution " + resolution + " --mode " + c[color] + " --format=jpeg > " + n
         ret = os.system(cmd)
         return ret
 
@@ -84,11 +84,11 @@ class Scan:
     def rm(n):
         os.system("rm " + n)
 
-    def scan_to_pdf(self, n, color=False):
+    def scan_to_pdf(self, n, color, resolution):
         q = "\""
         n_jpg = q + n + ".jpg" + q
         n_pdf = q + n + q
-        ret = self.scan_to_jpg(n_jpg, color)
+        ret = self.scan_to_jpg(n_jpg, color, resolution)
         if ret == 0:
             self.convert(n_jpg, n_pdf)
             self.rm(n_jpg)
@@ -148,8 +148,8 @@ class PdfUnite:
 
 class Params:
     def __init__(self):
-        [self.name, self.pageCount, self.color, self.rescan, self.finish, self.appendToday, self.landscape, self.last_scan, self.ocr] \
-            = [None, None, None, None, None, None, None, None, None]
+        [self.name, self.pageCount, self.color, self.rescan, self.finish, self.appendToday, self.landscape, self.last_scan, self.ocr, self.resolution] \
+            = [None, None, None, None, None, None, None, None, None, None]
 
     def parse_args(self):
         parser = argparse.ArgumentParser(description='Scan to a pdf document')
@@ -171,6 +171,8 @@ class Params:
                             help='rotate this page from portrait to landscape (clockwise)')
         parser.add_argument('-o', '--no-ocr', dest='ocr', action='store_false',
                             help='skip tesseract OCR (text recognition)')
+        parser.add_argument('--resolution', dest='resolution', type=str, default="300",
+                            help='resolution in dpi (default 300)')
 
         args = parser.parse_args()
 
@@ -183,6 +185,7 @@ class Params:
         self.appendToday = args.append_today
         self.landscape = args.landscape
         self.ocr = args.ocr
+        self.resolution = args.resolution
 
         if self.name is None and self.rescan is not True and self.finish is not True:
             parser.print_help()
@@ -216,7 +219,7 @@ class Control:
         suffix = time.strftime("%Y-%m-%d")
         return name + '-' + suffix
 
-    def run(self, name, page_count, color, rescan, finish, last_scan, append_today, landscape, ocr):
+    def run(self, name, page_count, color, rescan, finish, last_scan, append_today, landscape, ocr, resolution):
         # Parameter description
         #   name: without suffix ".pdf"
 
@@ -254,7 +257,7 @@ class Control:
         assert not finish, "cannot finish when no scanning is in progress"
 
         cur_pdf_name = self.get_cur_pdf_name(pv.name, pv.current)
-        if self.scan.scan_to_pdf(cur_pdf_name, pv.color) > 0:
+        if self.scan.scan_to_pdf(cur_pdf_name, pv.color, resolution) > 0:
             print("abort scan2pdf due to scanning error")
             sys.exit(-1)
 
@@ -301,7 +304,7 @@ def main():
     c = Control(p, s, pu)
 
     m.parse_args()
-    c.run(m.name, m.pageCount, m.color, m.rescan, m.finish, m.last_scan, m.appendToday, m.landscape, m.ocr)
+    c.run(m.name, m.pageCount, m.color, m.rescan, m.finish, m.last_scan, m.appendToday, m.landscape, m.ocr, m.resolution)
 
 
 if __name__ == "__main__":
