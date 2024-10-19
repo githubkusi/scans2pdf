@@ -71,7 +71,7 @@ class Scan:
         # "Missing 'endstream' or incorrect stream length" during pdfunite
         # cmd = "convert " + src + " pdf:- | pdfjam --paper a4paper --outfile " + tar
 
-        cmd = "convert -page a4 -density 72 " + src + " " + tar
+        cmd = "magick convert -page a4 -density 72 " + src + " " + tar
         print(cmd)
         os.system(cmd)
 
