@@ -69,9 +69,9 @@ class Scan:
     def convert(src, tar):
         # This solution doesn't have the strange 72dpi thing, but results in a
         # "Missing 'endstream' or incorrect stream length" during pdfunite
-        # cmd = "convert " + src + " pdf:- | pdfjam --paper a4paper --outfile " + tar
+        # cmd = "magick " + src + " pdf:- | pdfjam --paper a4paper --outfile " + tar
 
-        cmd = "magick convert -page a4 -density 72 " + src + " " + tar
+        cmd = "magick -page a4 -density 72 " + src + " " + tar
         print(cmd)
         os.system(cmd)
 
